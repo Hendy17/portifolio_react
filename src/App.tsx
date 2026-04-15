@@ -1,4 +1,70 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState, type VideoHTMLAttributes } from 'react';
+import transferPlatformVideo from './assets/video_project_transfer_platarforma.mp4';
+import transferPlatformPoster from './assets/video_project_transfer_platarforma.mp4.png';
+import financialControlVideo from './assets/video_finacnceiro_web.mov';
+import transferSiteVideo from './assets/video_site_tranfer.mp4';
+import transferSitePoster from './assets/video_site_tranfer.mov.png';
+import flow8Video from './assets/video_web_flow8.mp4';
+import flow8Poster from './assets/video_web_flow8.mp4.png';
+
+type LazyVideoProps = Omit<VideoHTMLAttributes<HTMLVideoElement>, 'src' | 'poster'> & {
+  src: string;
+  poster: string;
+  containerClassName?: string;
+  rootMargin?: string;
+};
+
+function LazyVideo({
+  src,
+  poster,
+  containerClassName,
+  rootMargin = '200px',
+  preload = 'metadata',
+  className,
+  ...videoProps
+}: LazyVideoProps) {
+  const supportsIntersectionObserver =
+    typeof window !== 'undefined' && 'IntersectionObserver' in window;
+  const [shouldLoad, setShouldLoad] = useState(() => !supportsIntersectionObserver);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const container = containerRef.current;
+
+    if (!container || shouldLoad || !supportsIntersectionObserver) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setShouldLoad(true);
+          observer.disconnect();
+        }
+      },
+      {
+        rootMargin,
+        threshold: 0.15,
+      }
+    );
+
+    observer.observe(container);
+
+    return () => observer.disconnect();
+  }, [rootMargin, shouldLoad, supportsIntersectionObserver]);
+
+  return (
+    <div ref={containerRef} className={containerClassName}>
+      <video
+        {...videoProps}
+        className={className}
+        poster={poster}
+        preload={shouldLoad ? preload : 'none'}
+        src={shouldLoad ? src : undefined}
+      />
+    </div>
+  );
+}
 
 function App() {
   const [modalOpen, setModalOpen] = useState<string | null>(null);
@@ -13,7 +79,6 @@ function App() {
 
   return (
     <div className="app">
-      {/* Header */}
       <header className="header">
         <div className="container">
           <div className="nav">
@@ -184,29 +249,21 @@ function App() {
           <div className="projects-grid">
             <div className="project-card" onClick={() => openModal('flow8')}>
               <div className="project-image project-image-1">
-                <div className="project-mockup">
-                  <div className="mockup-header">
-                    <div className="mockup-dots">
-                      <span></span><span></span><span></span>
-                    </div>
-                    <div className="mockup-title">Flow8 Sistema</div>
-                  </div>
-                  <div className="mockup-content">
-                    <div className="mockup-card">
-                      <div className="mockup-text"></div>
-                      <div className="mockup-text short"></div>
-                    </div>
-                    <div className="mockup-stats">
-                      <div className="stat-item"></div>
-                      <div className="stat-item"></div>
-                      <div className="stat-item"></div>
-                    </div>
-                  </div>
-                </div>
+                <LazyVideo
+                  containerClassName="project-video-frame"
+                  className="project-video"
+                  src={transferPlatformVideo}
+                  poster={transferPlatformPoster}
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  preload="metadata"
+                />
               </div>
               <div className="project-info">
-                <h3>Flow8 - Sistema de Gestão Contábil</h3>
-                <p>Solução completa de gestão contábil multi-tenant com processamento automático de planilhas, gestão de clientes e relatórios. Sistema em produção para empresa de contabilidade.</p>
+                <h3>Plataforma de Gestao para Transporte Executivo</h3>
+                <p>Plataforma web sob medida para centralizar funcionarios, veiculos, ganhos, gastos, quilometragem e relatorios da operacao de uma empresa de transporte executivo.</p>
                 <div className="project-tech">
                   <span>Next.js 15</span>
                   <span>NestJS</span>
@@ -220,23 +277,16 @@ function App() {
             
             <div className="project-card" onClick={() => openModal('mobile')}>
               <div className="project-image project-image-2">
-                <div className="project-mockup mobile">
-                  <div className="mobile-frame">
-                    <div className="mobile-header">
-                      <div className="mobile-notch"></div>
-                    </div>
-                    <div className="mobile-content">
-                      <div className="mobile-nav">
-                        <div className="nav-item active"></div>
-                        <div className="nav-item"></div>
-                        <div className="nav-item"></div>
-                      </div>
-                      <div className="mobile-cards">
-                        <div className="mobile-card"></div>
-                        <div className="mobile-card"></div>
-                      </div>
-                    </div>
-                  </div>
+                <div className="project-video-frame">
+                  <video
+                    className="project-video"
+                    src={financialControlVideo}
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    preload="metadata"
+                  />
                 </div>
               </div>
               <div className="project-info">
@@ -252,6 +302,62 @@ function App() {
                 </div>
               </div>
             </div>
+
+            <div className="project-card" onClick={() => openModal('transfer-site')}>
+              <div className="project-image project-image-3">
+                <LazyVideo
+                  containerClassName="project-video-frame"
+                  className="project-video"
+                  src={transferSiteVideo}
+                  poster={transferSitePoster}
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  preload="metadata"
+                />
+              </div>
+              <div className="project-info">
+                <h3>Transfer Executivo Premium</h3>
+                <p>Site institucional de alta conversão para a empresa Transfer Executivo Premium, com captação de clientes via WhatsApp automatizado, formulário inteligente e publicação no domínio escolhido pelo cliente.</p>
+                <div className="project-tech">
+                  <span>React</span>
+                  <span>TypeScript</span>
+                  <span>WhatsApp</span>
+                  <span>Automação</span>
+                  <span>UX</span>
+                  <span>Deploy</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="project-card" onClick={() => openModal('flow8-accounting')}>
+              <div className="project-image project-image-4">
+                <LazyVideo
+                  containerClassName="project-video-frame"
+                  className="project-video"
+                  src={flow8Video}
+                  poster={flow8Poster}
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  preload="metadata"
+                />
+              </div>
+              <div className="project-info">
+                <h3>Flow8 - Sistema Web de Gestao Contabil</h3>
+                <p>Plataforma desenvolvida para automatizar o controle de despesas empresariais, com importacao de planilhas, processamento financeiro e dashboard para analise por categoria e periodo.</p>
+                <div className="project-tech">
+                  <span>Next.js</span>
+                  <span>NestJS</span>
+                  <span>TypeORM</span>
+                  <span>JWT</span>
+                  <span>Excel/CSV</span>
+                  <span>Multi-tenant</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -262,67 +368,42 @@ function App() {
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close" onClick={closeModal}>&times;</button>
             <div className="modal-header">
-              <h2>Flow8 - Sistema de Gestão Contábil</h2>
+              <h2>Plataforma de Gestao para Transporte Executivo</h2>
             </div>
             <div className="modal-body">
               <div className="modal-images">
                 <div className="modal-image-placeholder">
-                  <div className="image-demo flow8-demo">
-                    <div className="demo-header">
-                      <div className="demo-nav">
-                        <div className="demo-logo">Flow8</div>
-                        <div className="demo-user">👤 Admin</div>
-                      </div>
-                    </div>
-                    <div className="demo-content">
-                      <div className="demo-sidebar">
-                        <div className="demo-menu-item active">📊 Dashboard</div>
-                        <div className="demo-menu-item">👥 Clientes</div>
-                        <div className="demo-menu-item">💰 Despesas</div>
-                        <div className="demo-menu-item">📈 Relatórios</div>
-                      </div>
-                      <div className="demo-main">
-                        <div className="demo-cards">
-                          <div className="demo-card">
-                            <div className="demo-card-title">💰 Total de Entradas</div>
-                            <div className="demo-card-value">R$ 45.230,00</div>
-                          </div>
-                          <div className="demo-card">
-                            <div className="demo-card-title">📤 Total de Saídas</div>
-                            <div className="demo-card-value">R$ 32.150,00</div>
-                          </div>
-                          <div className="demo-card">
-                            <div className="demo-card-title">💵 Saldo Líquido</div>
-                            <div className="demo-card-value">R$ 13.080,00</div>
-                          </div>
-                        </div>
-                        <div className="demo-table">
-                          <div className="demo-table-header">Lançamentos Recentes</div>
-                          <div className="demo-table-row">
-                            <span>📁 Fornecedor XYZ</span>
-                            <span>R$ 1.200,00</span>
-                          </div>
-                          <div className="demo-table-row">
-                            <span>🏢 Empresa ABC</span>
-                            <span>R$ 5.400,00</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  <LazyVideo
+                    containerClassName="modal-video-frame"
+                    className="modal-project-video"
+                    src={transferPlatformVideo}
+                    poster={transferPlatformPoster}
+                    controls
+                    muted
+                    playsInline
+                    preload="metadata"
+                    rootMargin="0px"
+                  />
                 </div>
               </div>
               <div className="modal-info">
+                <h3>Visao Geral</h3>
+                <ul>
+                  <li>✅ Plataforma web criada sob medida para transporte executivo</li>
+                  <li>✅ Centralizacao de dados operacionais e financeiros em um unico sistema</li>
+                  <li>✅ Apoio direto na rotina administrativa e no controle da operacao</li>
+                  <li>✅ Estrutura pensada para dar mais visibilidade e organizacao ao negocio</li>
+                </ul>
                 <h3>Funcionalidades Principais</h3>
                 <ul>
-                  <li>✅ Processamento automático de planilhas Excel/CSV</li>
-                  <li>✅ Gestão completa de clientes e despesas</li>
-                  <li>✅ Filtros por período (mensal/trimestral)</li>
-                  <li>✅ Upload de anexos e documentos</li>
-                  <li>✅ Suporte a formatos brasileiros (CNPJ, valores R$)</li>
-                  <li>✅ Sistema de autenticação seguro com JWT</li>
-                  <li>✅ Arquitetura multi-tenant com isolamento total</li>
-                  <li>✅ Interface intuitiva e responsiva</li>
+                  <li>✅ Autenticacao segura</li>
+                  <li>✅ Cadastro de funcionarios e veiculos</li>
+                  <li>✅ Controle financeiro por veiculo</li>
+                  <li>✅ Registro de ganhos, gastos e km rodado</li>
+                  <li>✅ Indicadores de desempenho e graficos comparativos</li>
+                  <li>✅ Relatorios mensais em Excel e PDF</li>
+                  <li>✅ Visao centralizada para mais controle e decisao</li>
+                  <li>✅ Estrutura pratica e alinhada a rotina do cliente</li>
                 </ul>
                 <h3>Tecnologias Utilizadas</h3>
                 <div className="modal-tech">
@@ -349,47 +430,17 @@ function App() {
             <div className="modal-body">
               <div className="modal-images">
                 <div className="modal-image-placeholder">
-                  <div className="image-demo finance-demo">
-                    <div className="finance-header">
-                      <div className="finance-nav">
-                        <div className="finance-logo">Financial Control</div>
-                        <div className="finance-menu">
-                          <span>Dashboard</span>
-                          <span>Clientes</span>
-                          <span>Despesas</span>
-                          <span>Emissão NF</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="finance-dashboard">
-                      <div className="dashboard-title">Dashboard</div>
-                      <div className="dashboard-subtitle">Resumo visual do balanço mensal das notas emitidas.</div>
-                      <div className="dashboard-content">
-                        <div className="chart-section">
-                          <div className="chart-container">
-                            <div className="chart-title">Faturamento por Dia (R$)</div>
-                            <div className="bar-chart">
-                              <div className="bar" style={{height: '40%'}}></div>
-                              <div className="bar" style={{height: '60%'}}></div>
-                              <div className="bar" style={{height: '30%'}}></div>
-                              <div className="bar" style={{height: '80%'}}></div>
-                              <div className="bar" style={{height: '50%'}}></div>
-                              <div className="bar" style={{height: '90%'}}></div>
-                              <div className="bar" style={{height: '70%'}}></div>
-                            </div>
-                            <div className="chart-labels">
-                              <span>01</span><span>02</span><span>03</span><span>04</span><span>05</span><span>06</span><span>07</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="pie-section">
-                          <div className="pie-container">
-                            <div className="chart-title">Notas Emitidas por Tipo</div>
-                            <div className="pie-chart"></div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                  <div className="modal-video-frame">
+                    <video
+                      className="modal-project-video"
+                      src={financialControlVideo}
+                      controls
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                      preload="metadata"
+                    />
                   </div>
                 </div>
               </div>
@@ -417,6 +468,120 @@ function App() {
                   <span>Multer</span>
                   <span>XLSX</span>
                   <span>Axios</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {modalOpen === 'transfer-site' && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" onClick={closeModal}>&times;</button>
+            <div className="modal-header">
+              <h2>Transfer Executivo Premium</h2>
+            </div>
+            <div className="modal-body">
+              <div className="modal-images">
+                <div className="modal-image-placeholder">
+                  <LazyVideo
+                    containerClassName="modal-video-frame"
+                    className="modal-project-video"
+                    src={transferSiteVideo}
+                    poster={transferSitePoster}
+                    controls
+                    muted
+                    playsInline
+                    preload="metadata"
+                    rootMargin="0px"
+                  />
+                </div>
+              </div>
+              <div className="modal-info">
+                <h3>Dominio Publicado</h3>
+                <div className="modal-tech">
+                  <a
+                    href="https://transferexecutivopremium.com.br/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    transferexecutivopremium.com.br
+                  </a>
+                </div>
+                <h3>Funcionalidades Principais</h3>
+                <ul>
+                  <li>✅ Site institucional premium com foco em autoridade e conversão</li>
+                  <li>✅ Captação de leads integrada ao WhatsApp com atendimento automatizado</li>
+                  <li>✅ Formulário inteligente para qualificar o cliente antes do contato</li>
+                  <li>✅ Estrutura pensada para uma experiência mais fluida e objetiva</li>
+                  <li>✅ Layout responsivo para desktop e mobile</li>
+                  <li>✅ Projeto publicado em https://transferexecutivopremium.com.br/</li>
+                  <li>✅ Comunicação clara dos diferenciais do serviço executivo premium</li>
+                  <li>✅ Jornada otimizada para aumentar pedidos de orçamento e contato</li>
+                </ul>
+                <h3>Recursos Aplicados</h3>
+                <div className="modal-tech">
+                  <span>React</span>
+                  <span>TypeScript</span>
+                  <span>WhatsApp</span>
+                  <span>Automação</span>
+                  <span>Formulário Inteligente</span>
+                  <span>Deploy em Domínio</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {modalOpen === 'flow8-accounting' && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" onClick={closeModal}>&times;</button>
+            <div className="modal-header">
+              <h2>Flow8 - Sistema Web de Gestao Contabil</h2>
+            </div>
+            <div className="modal-body">
+              <div className="modal-images">
+                <div className="modal-image-placeholder">
+                  <LazyVideo
+                    containerClassName="modal-video-frame"
+                    className="modal-project-video"
+                    src={flow8Video}
+                    poster={flow8Poster}
+                    controls
+                    muted
+                    playsInline
+                    preload="metadata"
+                    rootMargin="0px"
+                  />
+                </div>
+              </div>
+              <div className="modal-info">
+                <h3>Visao Geral</h3>
+                <p>Sistema web criado para automatizar o controle e a analise de despesas empresariais, reduzindo tarefas operacionais e organizando informacoes financeiras em uma unica plataforma.</p>
+                <h3>Funcionalidades Principais</h3>
+                <ul>
+                  <li>✅ Autenticacao de usuarios com controle de acesso</li>
+                  <li>✅ Estrutura multi-tenant com isolamento de dados</li>
+                  <li>✅ Cadastro e busca de clientes por CNPJ</li>
+                  <li>✅ Upload de arquivos Excel e CSV</li>
+                  <li>✅ Processamento automatico de despesas e receitas</li>
+                  <li>✅ Tratamento de formatos brasileiros de valores e datas</li>
+                  <li>✅ Dashboard com indicadores por categoria e periodo</li>
+                  <li>✅ Edicao, exclusao e historico detalhado de lancamentos</li>
+                </ul>
+                <h3>Recursos Aplicados</h3>
+                <div className="modal-tech">
+                  <span>Next.js</span>
+                  <span>NestJS</span>
+                  <span>TypeORM</span>
+                  <span>JWT</span>
+                  <span>Excel/CSV</span>
+                  <span>Dashboard</span>
+                  <span>Multi-tenant</span>
+                  <span>CNPJ Search</span>
                 </div>
               </div>
             </div>
